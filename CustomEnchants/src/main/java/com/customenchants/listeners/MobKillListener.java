@@ -3,7 +3,8 @@ package com.customenchants.listeners;
 import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.enchants.*;
 import com.customenchants.managers.EnchantManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -55,42 +56,44 @@ public class MobKillListener implements Listener {
                 if (bonus > 0) {
                     event.setDroppedExp(event.getDroppedExp() + bonus);
                     if (plugin.getConfig().getBoolean("settings.show-action-bar", true)) {
-                        killer.sendActionBar(ChatColor.AQUA + "✨ +" + bonus + " XP extra");
+                        killer.sendActionBar(Component.text(" +" + bonus + " XP extra", NamedTextColor.AQUA));
                     }
                 }
             }
 
-            // 💀 CAZADOR DE CABEZAS — drop de cabeza
+            // CAZADOR DE CABEZAS — drop de cabeza
+            // ESTO NO FUNCIONA CORRECTAMENTE!!!!!!!!!
             if (enchant instanceof HeadHunterEnchant hh) {
                 if (random.nextDouble() < hh.getDropChance(level)) {
                     Material headMat = hh.getHeadMaterial(entity.getType());
                     ItemStack head = new ItemStack(headMat);
-
-                    // Para PLAYER_HEAD genérico intentamos poner el nombre del mob
+                
                     if (headMat == Material.PLAYER_HEAD) {
                         SkullMeta meta = (SkullMeta) head.getItemMeta();
                         if (meta != null) {
-                            meta.setDisplayName(ChatColor.YELLOW + "Cabeza de " +
-                                    formatMobName(entity.getType().name()));
+                            meta.displayName(
+                                Component.text("Cabeza de " + formatMobName(entity.getType().name()),
+                                NamedTextColor.YELLOW)
+                            );
                             head.setItemMeta(meta);
                         }
                     }
-
+                
                     event.getDrops().add(head);
-                    if (plugin.getConfig().getBoolean("settings.show-action-bar", true)) {
-                        killer.sendActionBar(ChatColor.DARK_GRAY + "💀 ¡Cabeza obtenida!");
+                    if (plugin.getConfig().getBoolean("settings.show-action-bar", true))
+                        {
+                        killer.sendActionBar(Component.text("¡Cabeza obtenida!", NamedTextColor.DARK_GRAY));
                     }
                 }
             }
-
-            // 🥚 CAPTURADOR — drop de spawn egg
+            //  CAPTURADOR — drop de spawn egg
             if (enchant instanceof SpawnEggEnchant se) {
                 if (random.nextDouble() < se.getDropChance(level)) {
                     Material egg = se.getSpawnEgg(entity.getType());
                     if (egg != null) {
                         event.getDrops().add(new ItemStack(egg));
                         if (plugin.getConfig().getBoolean("settings.show-action-bar", true)) {
-                            killer.sendActionBar(ChatColor.GREEN + "🥚 ¡Spawn Egg obtenida!");
+                            killer.sendActionBar(Component.text(" ¡Spawn Egg obtenida!", NamedTextColor.GREEN));
                         }
                     }
                 }
@@ -115,8 +118,8 @@ public class MobKillListener implements Listener {
                 double multiplier = ns.getDamageMultiplier(level);
                 event.setDamage(event.getDamage() * multiplier);
                 if (plugin.getConfig().getBoolean("settings.show-action-bar", true)) {
-                    attacker.sendActionBar(ChatColor.GOLD + "🔱 ¡Cazador del Nether x" +
-                            String.format("%.1f", multiplier) + "!");
+                    attacker.sendActionBar(Component.text(" ¡Cazador del Nether x" +
+                            String.format("%.1f", multiplier) + "!", NamedTextColor.GOLD));
                 }
                 break;
             }

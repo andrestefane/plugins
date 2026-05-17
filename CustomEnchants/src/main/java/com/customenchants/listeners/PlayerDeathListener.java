@@ -4,7 +4,8 @@ import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.enchants.SoulboundEnchant;
 import com.customenchants.managers.EnchantManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -57,9 +58,8 @@ public class PlayerDeathListener implements Listener {
                 for (ItemStack item : toKeep) {
                     player.getInventory().addItem(item);
                 }
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&6[CustomEnchants] &d💀 Tu" + (toKeep.size() > 1 ? "s " + toKeep.size() + " items vinculados han" : " item vinculado ha") +
-                                " vuelto a ti gracias al encantamiento &dVinculado al Alma&7."));
+                player.sendMessage(Component.text("&6[CustomEnchants] Tu" + (toKeep.size() > 1 ? "s " + toKeep.size() + " items vinculados han" : " item vinculado ha") +
+                                " vuelto a ti gracias al encantamiento &dVinculado al Alma&7.", NamedTextColor.GOLD));
             }
         }, 20L);
     }

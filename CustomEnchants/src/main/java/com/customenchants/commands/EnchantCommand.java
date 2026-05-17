@@ -4,7 +4,9 @@ import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.gui.EnchantGUI;
 import com.customenchants.managers.EnchantManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,12 +20,10 @@ import org.bukkit.inventory.ItemStack;
  */
 public class EnchantCommand implements CommandExecutor {
 
-    private final CustomEnchantsPlugin plugin;
     private final EnchantManager manager;
     private final EnchantGUI gui;
 
     public EnchantCommand(CustomEnchantsPlugin plugin) {
-        this.plugin = plugin;
         this.manager = plugin.getEnchantManager();
         this.gui = new EnchantGUI(plugin);
     }
@@ -31,12 +31,12 @@ public class EnchantCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("customenchants.admin")) {
-            sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
+            sender.sendMessage(Component.text("No tienes permiso para usar este comando.", NamedTextColor.RED));
             return true;
         }
 
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(ChatColor.RED + "Solo jugadores pueden usar este comando.");
+            sender.sendMessage(Component.text("Solo jugadores pueden usar este comando.", NamedTextColor.RED));
             return true;
         }
 
@@ -50,8 +50,8 @@ public class EnchantCommand implements CommandExecutor {
             String id = args[1].toUpperCase();
             CustomEnchant enchant = manager.getById(id);
             if (enchant == null) {
-                player.sendMessage(ChatColor.RED + "Encantamiento no encontrado: " + id);
-                player.sendMessage(ChatColor.YELLOW + "Usa /encantamiento lista para ver los IDs disponibles.");
+                player.sendMessage(Component.text("Encantamiento no encontrado: " + id, NamedTextColor.RED));
+                player.sendMessage(Component.text("Usa /encantamiento lista para ver los IDs disponibles.", NamedTextColor.YELLOW));
                 return true;
             }
 
@@ -61,7 +61,7 @@ public class EnchantCommand implements CommandExecutor {
                     level = Integer.parseInt(args[2]);
                     level = Math.max(1, Math.min(level, enchant.getMaxLevel()));
                 } catch (NumberFormatException e) {
-                    player.sendMessage(ChatColor.RED + "Nivel inválido. Usando nivel 1.");
+                    player.sendMessage(Component.text("Nivel inválido. Usando nivel 1.", NamedTextColor.RED));
                 }
             }
 
@@ -71,32 +71,33 @@ public class EnchantCommand implements CommandExecutor {
             if (asBook) {
                 ItemStack book = enchant.createBook(level);
                 player.getInventory().addItem(book);
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&6[CustomEnchants] &7Te has dado un libro de " +
-                                enchant.getColoredDisplayName() + " " + CustomEnchant.toRoman(level) + "&7."));
+                player.sendMessage(Component.text("Te has dado un libro de " + enchant.getColoredDisplayName() + " " + CustomEnchant.toRoman(level) + ".", NamedTextColor.GREEN));
                 return true;
             }
 
             ItemStack item = player.getInventory().getItemInMainHand();
             if (item.getType().isAir()) {
-                player.sendMessage(ChatColor.RED + "Sostén un item en la mano (o usa 'libro' al final para crear un libro).");
+                player.sendMessage(Component.text("Sostén un item en la mano (o usa 'libro' al final para crear un libro).", NamedTextColor.RED));
                 return true;
             }
 
             if (!enchant.canApplyToItem(item)) {
-                player.sendMessage(ChatColor.RED + "Este encantamiento no se puede aplicar a este item.");
-                player.sendMessage(ChatColor.YELLOW + "Usa: /encantamiento dar " + id + " " + level + " libro  para crear un libro.");
+                player.sendMessage(Component.text("Este encantamiento no se puede aplicar a este item.", NamedTextColor.RED));
+                player.sendMessage(Component.text("Usa: /encantamiento dar " + id + " " + level + " libro  para crear un libro.", NamedTextColor.YELLOW));
                 return true;
             }
 
             enchant.applyToItem(item, level);
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    "&6[CustomEnchants] &7Aplicado " + enchant.getColoredDisplayName() +
-                            " " + CustomEnchant.toRoman(level) + " &7a tu item."));
+            player.sendMessage(convertLegacy("&6[CustomEnchants] &7Aplicado " + enchant.getColoredDisplayName() +
+                    " " + CustomEnchant.toRoman(level) + " &7a tu item."));
             return true;
         }
 
-        player.sendMessage(ChatColor.YELLOW + "Uso: /encantamiento <lista | dar <ID> [nivel] [libro]>");
+        player.sendMessage(Component.text("Uso: /encantamiento <lista | dar <ID> [nivel] [libro]>", NamedTextColor.YELLOW));
         return true;
+    }
+
+    private Component convertLegacy(String legacyText) {
+        return LegacyComponentSerializer.legacyAmpersand().deserialize(legacyText);
     }
 }

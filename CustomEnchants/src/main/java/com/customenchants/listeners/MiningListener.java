@@ -4,7 +4,8 @@ import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.enchants.LuckyMinerEnchant;
 import com.customenchants.managers.EnchantManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -52,7 +53,7 @@ public class MiningListener implements Listener {
                                     event.getBlock().getLocation(), drop);
                         }
                         if (plugin.getConfig().getBoolean("settings.show-action-bar", true)) {
-                            player.sendActionBar(ChatColor.GREEN + "🍀 ¡Doble drop!");
+                            player.sendActionBar(Component.text(" ¡Doble drop!", NamedTextColor.GREEN));
                         }
                     }
                 }

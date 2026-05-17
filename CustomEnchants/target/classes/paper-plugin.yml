@@ -1,5 +1,5 @@
 name: CustomEnchants
-version: 1.5.3
+version: 1.5.5
 main: com.customenchants.CustomEnchantsPlugin
 bootstrapper: com.customenchants.vanilla.CustomEnchantsBootstrap
 api-version: '1.21'

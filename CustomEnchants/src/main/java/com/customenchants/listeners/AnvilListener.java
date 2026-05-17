@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.view.AnvilView;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,19 +24,19 @@ import java.util.Map;
  */
 public class AnvilListener implements Listener {
 
-    private final CustomEnchantsPlugin plugin;
     private final EnchantManager manager;
 
     public AnvilListener(CustomEnchantsPlugin plugin) {
-        this.plugin = plugin;
         this.manager = plugin.getEnchantManager();
     }
-
+    private AnvilView getAnvilView(PrepareAnvilEvent event) {
+        return (AnvilView) event.getView();
+    }
     @EventHandler(priority = EventPriority.HIGH)
     public void onPrepareAnvil(PrepareAnvilEvent event) {
         AnvilInventory anvil = event.getInventory();
-        ItemStack left  = anvil.getItem(0);
-        ItemStack right = anvil.getItem(1);
+        ItemStack left  = anvil.getFirstItem();
+        ItemStack right = anvil.getSecondItem();
 
         if (left == null || right == null) return;
         if (right.getType() != Material.ENCHANTED_BOOK) return;
@@ -83,10 +84,9 @@ public class AnvilListener implements Listener {
         }
 
         if (applied == 0) return;
-
         event.setResult(result);
-        event.getInventory().setRepairCost(
-                Math.max(1, event.getInventory().getRepairCost()) + extraCost);
+        AnvilView view = getAnvilView(event);
+        view.setRepairCost(Math.max(1, view.getRepairCost()) + extraCost);
     }
 
     // ── CASO B: libro + libro ─────────────────────────────────────────────────
@@ -128,8 +128,8 @@ public class AnvilListener implements Listener {
         }
 
         event.setResult(resultBook);
-        event.getInventory().setRepairCost(
-                Math.max(1, event.getInventory().getRepairCost()) + extraCost);
+        AnvilView view = getAnvilView(event);
+        view.setRepairCost(Math.max(1, view.getRepairCost()) + extraCost);
     }
 
     // ── COMPATIBILIDAD ────────────────────────────────────────────────────────

@@ -33,7 +33,7 @@ public class CustomEnchantsPlugin extends JavaPlugin {
         registerCommands();
 
         getLogger().info("╔════════════════════════════════╗");
-        getLogger().info("║   CustomEnchants v1.0.0        ║");
+        getLogger().info("║   CustomEnchants v1.5.5        ║");
         getLogger().info("║   18 encantamientos cargados   ║");
         getLogger().info("║   ¡Plugin activo correctamente!║");
         getLogger().info("╚════════════════════════════════╝");

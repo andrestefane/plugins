@@ -2,7 +2,9 @@ package com.customenchants.gui;
 
 import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.listeners.CreativeTabListener;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,19 +21,17 @@ import java.util.List;
  */
 public class GUIListener implements Listener {
 
-    private static final String GUI_TITLE_MAIN  = ChatColor.DARK_PURPLE + "✨ Encantamientos Personalizados";
+    private static final Component GUI_TITLE_MAIN = Component.text("✨ Encantamientos Personalizados", NamedTextColor.LIGHT_PURPLE);
 
-    private final CustomEnchantsPlugin plugin;
     private final CreativeTabListener booksGui;
 
     public GUIListener(CustomEnchantsPlugin plugin) {
-        this.plugin = plugin;
         this.booksGui = new CreativeTabListener(plugin);
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        String title = event.getView().getTitle();
+        Component title = event.getView().title();
 
         // GUI principal de encantamientos
         if (title.equals(GUI_TITLE_MAIN)) {
@@ -53,8 +53,10 @@ public class GUIListener implements Listener {
         if (!item.hasItemMeta()) return false;
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !meta.hasLore()) return false;
-        List<String> lore = meta.getLore();
+        List<Component> lore = meta.lore();
         if (lore == null) return false;
-        return lore.stream().anyMatch(l -> ChatColor.stripColor(l).contains(text));
+        return lore.stream()
+                .map(PlainTextComponentSerializer.plainText()::serialize)
+                .anyMatch(line -> line.contains(text));
     }
 }

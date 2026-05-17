@@ -3,7 +3,8 @@ package com.customenchants.listeners;
 import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.managers.EnchantManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -70,10 +71,9 @@ public class EnchantTableListener implements Listener {
                 event.setItem(current);
             }
 
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    "&6[CustomEnchants] &7Tu item tambien recibio " +
-                            enchant.getColoredDisplayName() + " " +
-                            CustomEnchant.toRoman(finalLevel) + "&7!"));
+            player.sendMessage(Component.text("Tu item tambien recibio " +
+                    enchant.getColoredDisplayName() + " " +
+                    CustomEnchant.toRoman(finalLevel) + "!", NamedTextColor.GRAY));
         }, 1L);
     }
 }
