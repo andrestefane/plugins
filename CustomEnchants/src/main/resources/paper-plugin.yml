@@ -1,0 +1,15 @@
+name: CustomEnchants
+version: ${project.version}
+main: com.customenchants.CustomEnchantsPlugin
+bootstrapper: com.customenchants.vanilla.CustomEnchantsBootstrap
+api-version: '1.21'
+description: Custom enchantments plugin for Paper
+author: CustomEnchants
+
+permissions:
+  customenchants.use:
+    description: Permite usar encantamientos personalizados
+    default: true
+  customenchants.admin:
+    description: Permite administrar encantamientos personalizados
+    default: op

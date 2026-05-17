@@ -1,0 +1,122 @@
+# CustomEnchants Configuration
+# Plugin de Encantamientos Personalizados para Paper 1.21.8
+
+settings:
+  # Probabilidad base de encontrar encantamientos custom en cofres (0.0 - 1.0)
+  chest-spawn-chance: 0.35
+  # Probabilidad de que un aldeano tenga un item con encantamiento custom (0.0 - 1.0)
+  villager-trade-chance: 0.25
+  # Multiplicador de costo de experiencia en mesa de encantamientos para enchants custom
+  enchant-table-xp-multiplier: 1.5
+  # Niveles mínimos requeridos para encantamientos custom en mesa
+  enchant-table-min-level: 15
+  # Mostrar partículas al activar encantamiento
+  show-particles: true
+  # Mostrar mensajes de acción en pantalla
+  show-action-bar: true
+
+# Configuración individual de cada encantamiento
+enchantments:
+  THUNDER_STRIKE:
+    enabled: true
+    max-level: 3
+    # Probabilidad de activarse por golpe (0.0 - 1.0)
+    trigger-chance: 0.15
+    damage-multiplier: 2.5
+
+  LIFE_STEAL:
+    enabled: true
+    max-level: 3
+    heal-per-hit: 1.5
+    trigger-chance: 0.20
+
+  EXPLOSIVE_ARROWS:
+    enabled: true
+    max-level: 3
+    explosion-power: 1.5
+    trigger-chance: 1.0
+
+  VAMPIRISM:
+    enabled: true
+    max-level: 2
+    absorb-chance: 0.30
+    health-per-kill: 2.0
+
+  BERSERKER:
+    enabled: true
+    max-level: 3
+    damage-bonus-per-heart-lost: 0.05
+
+  ICE_ASPECT:
+    enabled: true
+    max-level: 2
+    freeze-duration-ticks: 60
+    trigger-chance: 0.25
+
+  MAGNETIC:
+    enabled: true
+    max-level: 3
+    radius: 5.0
+
+  AUTO_REPAIR:
+    enabled: true
+    max-level: 3
+    repair-interval-ticks: 6000
+    durability-per-level: 5
+
+  LUCKY_MINER:
+    enabled: true
+    max-level: 3
+    double-drop-chance: 0.20
+
+  WEBBING:
+    enabled: true
+    max-level: 2
+    trigger-chance: 0.20
+    web-duration-ticks: 100
+
+  SOULBOUND:
+    enabled: true
+    max-level: 1
+
+  POISON_EDGE:
+    enabled: true
+    max-level: 3
+    trigger-chance: 0.20
+    poison-duration-ticks: 100
+
+  # ── NUEVOS ENCANTAMIENTOS ──────────────────────────
+
+  NETHER_SLAYER:
+    enabled: true
+    max-level: 3
+    # Bonus de daño por nivel (1.0 = +100%)
+    damage-bonus-per-level: 0.50
+
+  XP_BOOST:
+    enabled: true
+    max-level: 3
+    # Bonus de XP por nivel (0.25 = +25%)
+    xp-bonus-per-level: 0.25
+
+  HEAD_HUNTER:
+    enabled: true
+    max-level: 3
+    # Probabilidad de cabeza por nivel (0.05 = 5%)
+    drop-chance-per-level: 0.05
+
+  SPAWN_EGG:
+    enabled: true
+    max-level: 3
+    # Probabilidad de spawn egg por nivel (0.03 = 3%)
+    drop-chance-per-level: 0.03
+
+  TUNNEL:
+    enabled: true
+    max-level: 5
+    # Nivel 1=2x2, 2=3x3, 3=4x4, 4=5x5, 5=6x6
+
+  AUTO_SMELT:
+    enabled: true
+    max-level: 1
+    # Incompatible con Silk Touch

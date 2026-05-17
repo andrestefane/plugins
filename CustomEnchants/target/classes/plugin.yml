@@ -1,0 +1,27 @@
+name: CustomEnchants
+version: 1.5.3
+main: com.customenchants.CustomEnchantsPlugin
+api-version: '1.21'
+description: Añade encantamientos personalizados al juego
+author: CustomEnchants
+
+commands:
+  encantamiento:
+    description: Gestiona los encantamientos personalizados
+    usage: /encantamiento <lista|dar <encantamiento> [nivel] [libro]>
+    aliases: [ce, customenchant]
+  listarce:
+    description: Lista todos los encantamientos personalizados disponibles
+    usage: /listarce
+  librosenchants:
+    description: Muestra todos los libros encantados personalizados disponibles
+    usage: /librosenchants
+    aliases: [libros, cebooks]
+
+permissions:
+  customenchants.use:
+    description: Permite usar encantamientos personalizados
+    default: true
+  customenchants.admin:
+    description: Permite administrar encantamientos personalizados
+    default: op
