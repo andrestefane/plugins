@@ -6,7 +6,7 @@
 
     <groupId>com.customenchants</groupId>
     <artifactId>CustomEnchants</artifactId>
-    <version>1.5.3</version>
+    <version>1.5.5</version>
     <packaging>jar</packaging>
 
     <name>CustomEnchants</name>

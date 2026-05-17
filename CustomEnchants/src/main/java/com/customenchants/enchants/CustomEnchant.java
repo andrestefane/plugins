@@ -2,7 +2,6 @@ package com.customenchants.enchants;
 
 import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.vanilla.VanillaEnchantSpec;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -10,8 +9,22 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+//import io.papermc.paper.datacomponent.DataComponentType;
+//import io.papermc.paper.registry.TypedKey;
+//import io.papermc.paper.registry.tag.Tag;
+//import io.papermc.paper.registry.tag.TagKey;
+
+// Import of net.kyori.adventure for better text handling in the future, if needed
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public abstract class CustomEnchant {
 
@@ -38,8 +51,10 @@ public abstract class CustomEnchant {
     public int getMaxLevel() { return maxLevel; }
     public List<Material> getApplicableMaterials() { return applicableMaterials; }
 
-    public String getPlainDisplayName() {
-        return ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', displayName));
+    public String getPlainDisplayName()
+    {
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(displayName);
+        return PlainTextComponentSerializer.plainText().serialize(component);
     }
 
     public String getColoredDisplayName() {
@@ -78,29 +93,42 @@ public abstract class CustomEnchant {
         return applyToRegularItem(item, level);
     }
 
-    public ItemStack applyToBook(ItemStack book, int level) {
-        if (level < 1) return book;
-        if (book.getType() == Material.BOOK) {
-            book.setType(Material.ENCHANTED_BOOK);
+    public ItemStack applyToBook(ItemStack book, int level)
+    {
+        if (level < 1 || book == null) return book;
+
+        ItemStack result = book.clone();
+
+        if (result.getType() != Material.ENCHANTED_BOOK)
+        {
+            result = new ItemStack(Material.ENCHANTED_BOOK);
+        }
+        ItemMeta meta = result.getItemMeta();
+        Enchantment vanilla = getVanillaEnchantment();
+
+        if (vanilla == null) {
+            // Optionally log or handle missing enchantment
+            return result;
         }
 
-        ItemMeta meta = book.getItemMeta();
-        Enchantment vanilla = getVanillaEnchantment();
-        if (meta instanceof EnchantmentStorageMeta storageMeta && vanilla != null) {
+        if (meta instanceof EnchantmentStorageMeta storageMeta)
+        {
             storageMeta.addStoredEnchant(vanilla, level, true);
             removeOldLore(storageMeta);
-            book.setItemMeta(storageMeta);
+            result.setItemMeta(storageMeta);
         }
-        return book;
+        return (result);
     }
 
     public ItemStack applyToRegularItem(ItemStack item, int level) {
         if (level < 1) return item;
 
         Enchantment vanilla = getVanillaEnchantment();
-        if (vanilla != null) {
-            item.addUnsafeEnchantment(vanilla, level);
+        if (vanilla == null) {
+            // Optionally log or handle missing enchantment
+            return item;
         }
+        item.addUnsafeEnchantment(vanilla, level);
 
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
@@ -122,10 +150,11 @@ public abstract class CustomEnchant {
         return 0;
     }
 
-    public Enchantment getVanillaEnchantment() {
-        return Enchantment.getByKey(new NamespacedKey(VanillaEnchantSpec.NAMESPACE, id.toLowerCase()));
+    public Enchantment getVanillaEnchantment()
+    {
+        NamespacedKey key = new NamespacedKey(VanillaEnchantSpec.NAMESPACE, id.toLowerCase());
+        return RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT).get(key);
     }
-
     protected int getConfigInt(String path, int defaultValue) {
         return plugin.getConfig().getInt("enchants." + this.id + "." + path, defaultValue);
     }
@@ -145,39 +174,48 @@ public abstract class CustomEnchant {
         return applyToBook(book, level);
     }
 
-    private void removeOldLore(ItemMeta meta) {
+    private void removeOldLore(ItemMeta meta)
+    {
         if (!meta.hasLore()) return;
 
-        List<String> lore = meta.getLore();
+        List<Component> lore = meta.lore();
         if (lore == null) return;
 
-        List<String> cleaned = new ArrayList<>(lore);
+        PlainTextComponentSerializer serializer = PlainTextComponentSerializer.plainText();
         String searchTag = getPlainDisplayName();
-        cleaned.removeIf(line -> ChatColor.stripColor(line).contains(searchTag));
-        meta.setLore(cleaned);
+
+        List<Component> cleaned = lore.stream()
+            .filter(component -> {
+                String text = serializer.serialize(component);
+                return !text.contains(searchTag);
+        })
+        .toList();
+        meta.lore(cleaned);
     }
 
-    private ChatColor getThemeColor() {
-        return switch (id) {
-            case "THUNDER_STRIKE" -> ChatColor.YELLOW;
-            case "LIFE_STEAL" -> ChatColor.DARK_RED;
-            case "EXPLOSIVE_ARROWS" -> ChatColor.GOLD;
-            case "VAMPIRISM" -> ChatColor.DARK_PURPLE;
-            case "BERSERKER" -> ChatColor.RED;
-            case "ICE_ASPECT" -> ChatColor.AQUA;
-            case "MAGNETIC" -> ChatColor.BLUE;
-            case "AUTO_REPAIR" -> ChatColor.GREEN;
-            case "LUCKY_MINER" -> ChatColor.DARK_GREEN;
-            case "WEBBING" -> ChatColor.WHITE;
-            case "SOULBOUND" -> ChatColor.LIGHT_PURPLE;
-            case "POISON_EDGE" -> ChatColor.DARK_GREEN;
-            case "NETHER_SLAYER" -> ChatColor.RED;
-            case "XP_BOOST" -> ChatColor.DARK_AQUA;
-            case "HEAD_HUNTER" -> ChatColor.DARK_GRAY;
-            case "SPAWN_EGG" -> ChatColor.GREEN;
-            case "TUNNEL" -> ChatColor.GRAY;
-            case "AUTO_SMELT" -> ChatColor.GOLD;
-            default -> ChatColor.GRAY;
+    private TextColor getThemeColor()
+    {
+        return switch (id)
+        {
+            case "THUNDER_STRIKE" -> NamedTextColor.YELLOW;
+            case "LIFE_STEAL" -> NamedTextColor.DARK_RED;
+            case "EXPLOSIVE_ARROWS" -> NamedTextColor.GOLD;
+            case "VAMPIRISM" -> NamedTextColor.DARK_PURPLE;
+            case "BERSERKER" -> NamedTextColor.RED;
+            case "ICE_ASPECT" -> NamedTextColor.AQUA;
+            case "MAGNETIC" -> NamedTextColor.BLUE;
+            case "AUTO_REPAIR" -> NamedTextColor.GREEN;
+            case "LUCKY_MINER" -> NamedTextColor.DARK_GREEN;
+            case "WEBBING" -> NamedTextColor.WHITE;
+            case "SOULBOUND" -> NamedTextColor.LIGHT_PURPLE;
+            case "POISON_EDGE" -> NamedTextColor.DARK_GREEN;
+            case "NETHER_SLAYER" -> NamedTextColor.RED;
+            case "XP_BOOST" -> NamedTextColor.DARK_AQUA;
+            case "HEAD_HUNTER" -> NamedTextColor.DARK_GRAY;
+            case "SPAWN_EGG" -> NamedTextColor.GREEN;
+            case "TUNNEL" -> NamedTextColor.GRAY;
+            case "AUTO_SMELT" -> NamedTextColor.GOLD;
+            default -> NamedTextColor.GRAY;
         };
     }
 

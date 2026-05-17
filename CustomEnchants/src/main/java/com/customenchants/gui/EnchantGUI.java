@@ -3,11 +3,15 @@ package com.customenchants.gui;
 import com.customenchants.CustomEnchantsPlugin;
 import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.managers.EnchantManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -19,7 +23,7 @@ import java.util.List;
  */
 public class EnchantGUI {
 
-    private static final String GUI_TITLE = ChatColor.DARK_PURPLE + "✨ Encantamientos Personalizados";
+    private static final Component GUI_TITLE = Component.text("✨ Encantamientos Personalizados", NamedTextColor.LIGHT_PURPLE);
     private static final int GUI_SIZE = 54; // 6 filas
 
     // Materiales representativos para cada encantamiento
@@ -45,11 +49,9 @@ public class EnchantGUI {
         put("AUTO_SMELT",       Material.FURNACE);
     }};
 
-    private final CustomEnchantsPlugin plugin;
     private final EnchantManager manager;
 
     public EnchantGUI(CustomEnchantsPlugin plugin) {
-        this.plugin = plugin;
         this.manager = plugin.getEnchantManager();
     }
 
@@ -84,40 +86,45 @@ public class EnchantGUI {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
-        // Nombre del encantamiento
-        meta.setDisplayName(enchant.getColoredDisplayName());
+        // Nombre del encantamiento - convertir de String coloreado a Component
+        Component displayName = Component.text(enchant.getPlainDisplayName())
+                .color(getColorFromEnchant(enchant.getId()));
+        meta.displayName(displayName);
 
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.DARK_GRAY + "─────────────────");
-        lore.add(ChatColor.GRAY + "📖 " + enchant.getDescription());
-        lore.add("");
-        lore.add(ChatColor.YELLOW + "Nivel máximo: " + ChatColor.WHITE + CustomEnchant.toRoman(enchant.getMaxLevel()));
-        lore.add("");
+        // Lore con Components
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("─────────────────", NamedTextColor.DARK_GRAY));
+        lore.add(Component.text("📖 " + enchant.getDescription(), NamedTextColor.GRAY));
+        lore.add(Component.empty());
+        lore.add(Component.text("Nivel máximo: " + CustomEnchant.toRoman(enchant.getMaxLevel()), NamedTextColor.YELLOW));
+        lore.add(Component.empty());
 
         // Mostrar en qué items aplica (resumido)
         String applies = getAppliesTo(enchant);
-        lore.add(ChatColor.AQUA + "Aplica a: " + ChatColor.WHITE + applies);
-        lore.add("");
+        lore.add(Component.text("Aplica a: " + applies, NamedTextColor.AQUA));
+        lore.add(Component.empty());
 
         // Dónde conseguirlo
-        lore.add(ChatColor.GREEN + "¿Dónde conseguirlo?");
-        lore.add(ChatColor.GRAY + " ⬦ Cofres del mundo");
-        lore.add(ChatColor.GRAY + " ⬦ Aldeanos armeros/herreros");
-        lore.add(ChatColor.GRAY + " ⬦ Mesa de encantamientos (nv. 15+)");
+        lore.add(Component.text("¿Dónde conseguirlo?", NamedTextColor.GREEN));
+        lore.add(Component.text(" ⬦ Cofres del mundo", NamedTextColor.GRAY));
+        lore.add(Component.text(" ⬦ Aldeanos armeros/herreros", NamedTextColor.GRAY));
+        lore.add(Component.text(" ⬦ Mesa de encantamientos (nv. 15+)", NamedTextColor.GRAY));
 
         // Info extra para admins
         if (player.hasPermission("customenchants.admin")) {
-            lore.add("");
-            lore.add(ChatColor.GOLD + "[Admin] ID: " + ChatColor.WHITE + enchant.getId());
-            lore.add(ChatColor.GOLD + "Cmd: " + ChatColor.WHITE + "/encantamiento dar " + enchant.getId() + " <nivel>");
+            lore.add(Component.empty());
+            lore.add(Component.text("[Admin] ID: " + enchant.getId(), NamedTextColor.GOLD));
+            lore.add(Component.text("Cmd: /encantamiento dar " + enchant.getId() + " <nivel>", NamedTextColor.WHITE));
         }
 
-        lore.add(ChatColor.DARK_GRAY + "─────────────────");
+        lore.add(Component.empty());
+        lore.add(Component.text("─────────────────", NamedTextColor.DARK_GRAY));
 
-        meta.setLore(lore);
-        // Efecto de encantamiento visual
-        meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
-        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+        meta.lore(lore);
+        
+        // Efecto de encantamiento visual - usar Enchantment.UNBREAKING sin deprecación
+        meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         item.setItemMeta(meta);
         return item;
@@ -141,7 +148,7 @@ public class EnchantGUI {
         ItemStack glass = new ItemStack(Material.PURPLE_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(" ");
+            meta.displayName(Component.text(" "));
             glass.setItemMeta(meta);
         }
         return glass;
@@ -151,18 +158,22 @@ public class EnchantGUI {
         ItemStack info = new ItemStack(Material.KNOWLEDGE_BOOK);
         ItemMeta meta = info.getItemMeta();
         if (meta == null) return info;
-        meta.setDisplayName(ChatColor.GOLD + "ℹ Información");
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + "Total de encantamientos: " + ChatColor.WHITE + manager.getEnabled().size());
-        lore.add("");
-        lore.add(ChatColor.YELLOW + "Los encantamientos custom aparecen");
-        lore.add(ChatColor.YELLOW + "en el lore del item en gris.");
+        
+        meta.displayName(Component.text("ℹ Información", NamedTextColor.GOLD));
+        
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("Total de encantamientos: " + manager.getEnabled().size(), NamedTextColor.GRAY));
+        lore.add(Component.empty());
+        lore.add(Component.text("Los encantamientos custom aparecen", NamedTextColor.YELLOW));
+        lore.add(Component.text("en el lore del item en gris.", NamedTextColor.YELLOW));
+        
         if (player.hasPermission("customenchants.admin")) {
-            lore.add("");
-            lore.add(ChatColor.GOLD + "[Admin] Usa /encantamiento dar <ID> <nivel>");
-            lore.add(ChatColor.GOLD + "para dar encantamientos manualmente.");
+            lore.add(Component.empty());
+            lore.add(Component.text("[Admin] Usa /encantamiento dar <ID> <nivel>", NamedTextColor.GOLD));
+            lore.add(Component.text("para dar encantamientos manualmente.", NamedTextColor.GOLD));
         }
-        meta.setLore(lore);
+        
+        meta.lore(lore);
         info.setItemMeta(meta);
         return info;
     }
@@ -172,13 +183,16 @@ public class EnchantGUI {
         ItemStack btn = new ItemStack(Material.ENCHANTED_BOOK);
         ItemMeta meta = btn.getItemMeta();
         if (meta == null) return btn;
-        meta.setDisplayName(ChatColor.AQUA + "📖 Ver Libros Encantados");
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + "Muestra todos los libros");
-        lore.add(ChatColor.GRAY + "encantados disponibles.");
-        lore.add("");
-        lore.add(ChatColor.GREEN + "▶ Click para abrir");
-        meta.setLore(lore);
+        
+        meta.displayName(Component.text("📖 Ver Libros Encantados", NamedTextColor.AQUA));
+        
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("Muestra todos los libros", NamedTextColor.GRAY));
+        lore.add(Component.text("encantados disponibles.", NamedTextColor.GRAY));
+        lore.add(Component.empty());
+        lore.add(Component.text("▶ Click para abrir", NamedTextColor.GREEN));
+        
+        meta.lore(lore);
         btn.setItemMeta(meta);
         return btn;
     }
@@ -213,5 +227,29 @@ public class EnchantGUI {
         if (hasBows) categories.add("Arcos");
         if (hasArmor) categories.add("Armadura");
         return String.join(", ", categories);
+    }
+
+    private TextColor getColorFromEnchant(String id) {
+        return switch (id) {
+            case "THUNDER_STRIKE" -> NamedTextColor.YELLOW;
+            case "LIFE_STEAL" -> NamedTextColor.DARK_RED;
+            case "EXPLOSIVE_ARROWS" -> NamedTextColor.GOLD;
+            case "VAMPIRISM" -> NamedTextColor.DARK_PURPLE;
+            case "BERSERKER" -> NamedTextColor.RED;
+            case "ICE_ASPECT" -> NamedTextColor.AQUA;
+            case "MAGNETIC" -> NamedTextColor.BLUE;
+            case "AUTO_REPAIR" -> NamedTextColor.GREEN;
+            case "LUCKY_MINER" -> NamedTextColor.DARK_GREEN;
+            case "WEBBING" -> NamedTextColor.WHITE;
+            case "SOULBOUND" -> NamedTextColor.LIGHT_PURPLE;
+            case "POISON_EDGE" -> NamedTextColor.DARK_GREEN;
+            case "NETHER_SLAYER" -> NamedTextColor.RED;
+            case "XP_BOOST" -> NamedTextColor.DARK_AQUA;
+            case "HEAD_HUNTER" -> NamedTextColor.DARK_GRAY;
+            case "SPAWN_EGG" -> NamedTextColor.GREEN;
+            case "TUNNEL" -> NamedTextColor.GRAY;
+            case "AUTO_SMELT" -> NamedTextColor.GOLD;
+            default -> NamedTextColor.GRAY;
+        };
     }
 }

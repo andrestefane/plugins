@@ -1,104 +1,85 @@
 package com.customenchants.listeners;
 
 import com.customenchants.CustomEnchantsPlugin;
-import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.managers.CreativeTabManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implementa una "pestaña" creativa para los libros encantados custom.
- *
- * Como la API de Paper 1.21 no expone registro de pestañas creativas custom
- * de forma directa sin DataPacks, usamos el comando /listarce y una GUI propia.
- * Este listener añade un botón en la GUI de lista que permite sacar libros
- * directamente al inventario en modo creativo.
- *
- * Adicionalmente, cuando un jugador en creativo escribe /listarce, la GUI
- * incluye botones para dar cada libro directamente.
- */
 public class CreativeTabListener implements Listener {
 
-    private static final String GUI_TITLE_BOOKS = ChatColor.DARK_PURPLE + "📖 Libros Encantados";
+    // Título de la GUI (solo para mostrar al jugador)
+    private static final Component GUI_TITLE_BOOKS =
+            Component.text(" Libros Encantados", NamedTextColor.DARK_PURPLE);
 
-    private final CustomEnchantsPlugin plugin;
+    // Clave PDC para marcar la lore extra de creativo en el libro
+    private static final String CREATIVE_LORE_KEY = "creative_lore_marker";
+
     private final CreativeTabManager tabManager;
+    private final NamespacedKey creativeLoreKey;
 
     public CreativeTabListener(CustomEnchantsPlugin plugin) {
-        this.plugin = plugin;
         this.tabManager = new CreativeTabManager(plugin);
+        this.creativeLoreKey = new NamespacedKey(plugin, CREATIVE_LORE_KEY);
     }
 
-    /**
-     * Abre la GUI de libros encantados para el jugador dado.
-     */
+    // -------------------------------------------------------------------------
+    // Apertura de GUI
+    // -------------------------------------------------------------------------
+
     public void openBooksGUI(Player player) {
         List<ItemStack> books = tabManager.getAllEnchantedBooks();
 
-        // Calcular tamaño del inventario (múltiplo de 9, mínimo 9)
-        int size = (int) Math.ceil(books.size() / 9.0) * 9;
-        size = Math.max(9, Math.min(size + 9, 54)); // máximo 54 slots, con fila extra para bordes
-
         Inventory inv = org.bukkit.Bukkit.createInventory(null, 54, GUI_TITLE_BOOKS);
 
-        // Rellenar bordes
+        // Bordes con cristal morado
         ItemStack border = buildBorder();
-        for (int i = 0; i < 9; i++) inv.setItem(i, border);
-        for (int i = 45; i < 54; i++) inv.setItem(i, border);
+        for (int i = 0; i < 9; i++)          inv.setItem(i, border);
+        for (int i = 45; i < 54; i++)        inv.setItem(i, border);
         for (int row = 1; row <= 4; row++) {
-            inv.setItem(row * 9, border);
+            inv.setItem(row * 9,     border);
             inv.setItem(row * 9 + 8, border);
         }
 
-        // Colocar libros en slots interiores
+        // Libros en slots interiores
         int[] innerSlots = getInnerSlots();
         for (int i = 0; i < books.size() && i < innerSlots.length; i++) {
             ItemStack book = books.get(i).clone();
-            // Añadir indicación en lore para modo creativo
             addCreativeLore(book, player);
             inv.setItem(innerSlots[i], book);
         }
 
-        // Botón de info en slot central inferior
-        ItemStack info = new ItemStack(Material.KNOWLEDGE_BOOK);
-        ItemMeta infoMeta = info.getItemMeta();
-        if (infoMeta != null) {
-            infoMeta.setDisplayName(ChatColor.GOLD + "ℹ Uso de libros");
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GRAY + "Combina el libro con tu arma");
-            lore.add(ChatColor.GRAY + "en un yunque para encantarla.");
-            lore.add("");
-            lore.add(ChatColor.GRAY + "Combina dos libros del mismo");
-            lore.add(ChatColor.GRAY + "nivel para subir al siguiente.");
-            if (player.getGameMode() == GameMode.CREATIVE) {
-                lore.add("");
-                lore.add(ChatColor.GREEN + "✔ Click: añadir libro al inventario");
-            }
-            infoMeta.setLore(lore);
-            info.setItemMeta(infoMeta);
-        }
-        inv.setItem(49, info);
+        // Botón informativo central
+        inv.setItem(49, buildInfoButton(player));
 
         player.openInventory(inv);
     }
 
+    // -------------------------------------------------------------------------
+    // Evento de click
+    // -------------------------------------------------------------------------
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
-        if (!event.getView().getTitle().equals(GUI_TITLE_BOOKS)) return;
+
+        // Identificamos la GUI por su título usando el serializer de Adventure
+        // (comparar Component directamente es lo más seguro en Paper 1.21)
+        Component viewTitle = event.getView().title();
+        if (!viewTitle.equals(GUI_TITLE_BOOKS)) return;
 
         event.setCancelled(true);
 
@@ -108,45 +89,104 @@ public class CreativeTabListener implements Listener {
         if (clicked.getType() == Material.KNOWLEDGE_BOOK) return;
         if (clicked.getType() != Material.ENCHANTED_BOOK) return;
 
-        // Solo en creativo: dar el libro al jugador
         if (player.getGameMode() == GameMode.CREATIVE) {
             ItemStack bookToGive = clicked.clone();
-            // Limpiar la lore extra de "Click para añadir"
             removeCreativeLore(bookToGive);
             player.getInventory().addItem(bookToGive);
-            player.sendActionBar(ChatColor.GREEN + "📖 Libro añadido al inventario");
+            player.sendActionBar(
+                    Component.text("📖 Libro añadido al inventario", NamedTextColor.GREEN));
         } else {
-            player.sendActionBar(ChatColor.RED + "Solo disponible en modo creativo");
+            player.sendActionBar(
+                    Component.text("Solo disponible en modo creativo", NamedTextColor.RED));
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Helpers de lore creativo
+    // -------------------------------------------------------------------------
+
+    /**
+     * Añade dos líneas al lore del libro para indicar que se puede hacer click,
+     * y marca el item con una PDC tag para poder identificar y eliminar esas
+     * líneas de forma fiable sin depender de comparación de texto visible.
+     */
     private void addCreativeLore(ItemStack book, Player player) {
         if (player.getGameMode() != GameMode.CREATIVE) return;
         ItemMeta meta = book.getItemMeta();
         if (meta == null) return;
-        List<String> lore = meta.getLore();
+
+        List<Component> lore = meta.lore();
         if (lore == null) lore = new ArrayList<>();
-        lore.add("");
-        lore.add(ChatColor.GREEN + "▶ Click para añadir al inventario");
-        meta.setLore(lore);
+        else lore = new ArrayList<>(lore); // copia mutable
+
+        lore.add(Component.empty());
+        lore.add(Component.text("▶ Click para añadir al inventario", NamedTextColor.GREEN));
+
+        meta.lore(lore);
+
+        // Marcamos cuántas líneas extra añadimos para quitarlas de forma exacta
+        meta.getPersistentDataContainer().set(creativeLoreKey, PersistentDataType.INTEGER, 2);
+
         book.setItemMeta(meta);
     }
 
+    /**
+     * Elimina las líneas extra que añadió {@link #addCreativeLore} usando la
+     * PDC tag como guía, sin comparar texto serializado.
+     */
     private void removeCreativeLore(ItemStack book) {
         ItemMeta meta = book.getItemMeta();
-        if (meta == null || !meta.hasLore()) return;
-        List<String> lore = meta.getLore();
-        if (lore == null) return;
-        lore.removeIf(line -> ChatColor.stripColor(line).contains("Click para añadir"));
-        lore.removeIf(String::isEmpty); // quitar línea vacía extra que añadimos
-        meta.setLore(lore);
+        if (meta == null) return;
+
+        Integer extraLines = meta.getPersistentDataContainer()
+                .get(creativeLoreKey, PersistentDataType.INTEGER);
+        if (extraLines == null || extraLines <= 0) return;
+
+        List<Component> lore = meta.lore();
+        if (lore == null || lore.size() < extraLines) return;
+
+        // Las líneas extra están siempre al final
+        List<Component> cleaned = new ArrayList<>(lore.subList(0, lore.size() - extraLines));
+        meta.lore(cleaned);
+        meta.getPersistentDataContainer().remove(creativeLoreKey);
+
         book.setItemMeta(meta);
+    }
+
+    // -------------------------------------------------------------------------
+    // Builders de items auxiliares
+    // -------------------------------------------------------------------------
+
+    private ItemStack buildInfoButton(Player player) {
+        ItemStack info = new ItemStack(Material.KNOWLEDGE_BOOK);
+        ItemMeta meta = info.getItemMeta();
+        if (meta == null) return info;
+
+        meta.displayName(Component.text("Uso de libros", NamedTextColor.GOLD));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("Combina el libro con tu arma", NamedTextColor.GRAY));
+        lore.add(Component.text("en un yunque para encantarla.", NamedTextColor.GRAY));
+        lore.add(Component.empty());
+        lore.add(Component.text("Combina dos libros del mismo", NamedTextColor.GRAY));
+        lore.add(Component.text("nivel para subir al siguiente.", NamedTextColor.GRAY));
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            lore.add(Component.empty());
+            lore.add(Component.text("✔ Click: añadir libro al inventario", NamedTextColor.GREEN));
+        }
+        meta.lore(lore);
+        info.setItemMeta(meta);
+        return info;
     }
 
     private ItemStack buildBorder() {
         ItemStack glass = new ItemStack(Material.PURPLE_STAINED_GLASS_PANE);
         ItemMeta meta = glass.getItemMeta();
-        if (meta != null) { meta.setDisplayName(" "); glass.setItemMeta(meta); }
+        if (meta != null) {
+            // Nombre vacío con itálica desactivada para que no aparezca "Air" ni cursiva
+            meta.displayName(Component.text(" "));
+            glass.setItemMeta(meta);
+        }
         return glass;
     }
 

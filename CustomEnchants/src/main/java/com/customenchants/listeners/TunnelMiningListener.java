@@ -5,7 +5,8 @@ import com.customenchants.enchants.AutoSmeltEnchant;
 import com.customenchants.enchants.CustomEnchant;
 import com.customenchants.enchants.TunnelEnchant;
 import com.customenchants.managers.EnchantManager;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -112,7 +113,7 @@ public class TunnelMiningListener implements Listener {
 
         if (plugin.getConfig().getBoolean("settings.show-action-bar", true)) {
             String depthText = depth > 1 ? " x" + depth : "";
-            player.sendActionBar(ChatColor.GOLD + "Tunel " + sideSize + "x" + sideSize + depthText);
+            player.sendActionBar(Component.text("Tunel " + sideSize + "x" + sideSize + depthText, NamedTextColor.GOLD));
         }
     }
 
